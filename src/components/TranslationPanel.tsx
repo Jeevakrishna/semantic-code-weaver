@@ -5,6 +5,9 @@ import { toast } from "sonner";
 import CodeEditor from "./CodeEditor";
 import LanguageSelector, { Language } from "./LanguageSelector";
 import PythonExecutor from "./PythonExecutor";
+import TranslationModeSelector from "./TranslationModeSelector";
+import IRViewer from "./IRViewer";
+import { useLocalTranslation } from "@/hooks/useLocalTranslation";
 import { cn } from "@/lib/utils";
 
 interface TranslationPanelProps {
@@ -14,20 +17,38 @@ interface TranslationPanelProps {
 
 const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: TranslationPanelProps) => {
   const [sourceCode, setSourceCode] = useState(initialCode);
-  const [translatedCode, setTranslatedCode] = useState("");
   const [sourceLanguage, setSourceLanguage] = useState<Language>(initialLanguage);
   const [targetLanguage, setTargetLanguage] = useState<Language>(initialLanguage === "python" ? "cpp" : "python");
+  const [copied, setCopied] = useState(false);
+
+  const {
+    translate,
+    translatedCode,
+    isTranslating,
+    isLoadingModel,
+    modelProgress,
+    initializeModel,
+    mode,
+    setMode,
+    isModelReady,
+    modelInfo,
+    webGPUSupported,
+    checkSupport,
+    ir,
+    error,
+  } = useLocalTranslation();
+
+  useEffect(() => {
+    checkSupport();
+  }, [checkSupport]);
 
   useEffect(() => {
     if (initialCode) {
       setSourceCode(initialCode);
       setSourceLanguage(initialLanguage);
       setTargetLanguage(initialLanguage === "python" ? "cpp" : "python");
-      setTranslatedCode("");
     }
   }, [initialCode, initialLanguage]);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleTranslate = async () => {
     if (!sourceCode.trim()) {
@@ -35,83 +56,11 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
       return;
     }
 
-    setIsTranslating(true);
-    setTranslatedCode("");
-
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-code`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            sourceCode,
-            sourceLanguage,
-            targetLanguage,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Translation failed");
-      }
-
-      if (!response.body) {
-        throw new Error("No response body");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let result = "";
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              result += content;
-              setTranslatedCode(result);
-            }
-          } catch {
-            // Incomplete JSON, wait for more data
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
-      }
-
-      if (!result.trim()) {
-        throw new Error("No translation received");
-      }
-
+      await translate(sourceCode, sourceLanguage, targetLanguage);
       toast.success("Translation complete!");
-    } catch (error) {
-      console.error("Translation error:", error);
-      toast.error(error instanceof Error ? error.message : "Translation failed");
-    } finally {
-      setIsTranslating(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Translation failed");
     }
   };
 
@@ -128,13 +77,24 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
     setSourceLanguage(targetLanguage);
     setTargetLanguage(tempLang);
     setSourceCode(translatedCode);
-    setTranslatedCode(sourceCode);
   };
 
   const showPythonExecutor = targetLanguage === "python" && translatedCode.trim();
 
   return (
     <div className="flex flex-col h-full gap-4">
+      {/* Mode selector */}
+      <TranslationModeSelector
+        mode={mode}
+        onModeChange={setMode}
+        isModelReady={isModelReady}
+        isLoadingModel={isLoadingModel}
+        modelProgress={modelProgress}
+        onInitializeModel={initializeModel}
+        webGPUSupported={webGPUSupported}
+        modelInfo={modelInfo}
+      />
+
       {/* Language selectors and controls */}
       <div className="flex flex-wrap items-end gap-4">
         <LanguageSelector
@@ -165,7 +125,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
 
         <Button
           onClick={handleTranslate}
-          disabled={isTranslating || !sourceCode.trim()}
+          disabled={isTranslating || isLoadingModel || !sourceCode.trim()}
           className="gap-2"
         >
           {isTranslating ? (
@@ -239,10 +199,11 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
             className={cn("flex-1", isTranslating && "opacity-70")}
           />
           
+          {/* IR Viewer - shown when using local mode */}
+          {mode === "local" && <IRViewer ir={ir} />}
+          
           {/* Python executor */}
-          {showPythonExecutor && (
-            <PythonExecutor code={translatedCode} />
-          )}
+          {showPythonExecutor && <PythonExecutor code={translatedCode} />}
         </div>
       </div>
     </div>
