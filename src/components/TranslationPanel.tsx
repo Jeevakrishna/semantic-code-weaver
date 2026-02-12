@@ -7,6 +7,9 @@ import LanguageSelector, { Language } from "./LanguageSelector";
 import PythonExecutor from "./PythonExecutor";
 import TranslationModeSelector from "./TranslationModeSelector";
 import IRViewer from "./IRViewer";
+import AttentionHeatmap from "./AttentionHeatmap";
+import EmbeddingSimilarity from "./EmbeddingSimilarity";
+import SemanticVerification from "./SemanticVerification";
 import { useLocalTranslation } from "@/hooks/useLocalTranslation";
 import { cn } from "@/lib/utils";
 
@@ -15,10 +18,10 @@ interface TranslationPanelProps {
   initialLanguage?: Language;
 }
 
-const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: TranslationPanelProps) => {
+const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: TranslationPanelProps) => {
   const [sourceCode, setSourceCode] = useState(initialCode);
   const [sourceLanguage, setSourceLanguage] = useState<Language>(initialLanguage);
-  const [targetLanguage, setTargetLanguage] = useState<Language>(initialLanguage === "python" ? "cpp" : "python");
+  const [targetLanguage, setTargetLanguage] = useState<Language>(initialLanguage === "java" ? "python" : "java");
   const [copied, setCopied] = useState(false);
 
   const {
@@ -46,7 +49,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
     if (initialCode) {
       setSourceCode(initialCode);
       setSourceLanguage(initialLanguage);
-      setTargetLanguage(initialLanguage === "python" ? "cpp" : "python");
+      setTargetLanguage(initialLanguage === "java" ? "python" : "java");
     }
   }, [initialCode, initialLanguage]);
 
@@ -55,7 +58,6 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
       toast.error("Please enter some code to translate");
       return;
     }
-
     try {
       await translate(sourceCode, sourceLanguage, targetLanguage);
       toast.success("Translation complete!");
@@ -80,9 +82,10 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
   };
 
   const showPythonExecutor = targetLanguage === "python" && translatedCode.trim();
+  const hasTranslation = translatedCode.trim().length > 0;
 
   return (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex flex-col gap-6">
       {/* Mode selector */}
       <TranslationModeSelector
         mode={mode}
@@ -103,7 +106,6 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
           label="Source Language"
           excludeLanguage={targetLanguage}
         />
-        
         <Button
           variant="outline"
           size="icon"
@@ -113,16 +115,13 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
-
         <LanguageSelector
           value={targetLanguage}
           onChange={setTargetLanguage}
           label="Target Language"
           excludeLanguage={sourceLanguage}
         />
-
         <div className="flex-1" />
-
         <Button
           onClick={handleTranslate}
           disabled={isTranslating || isLoadingModel || !sourceCode.trim()}
@@ -142,10 +141,10 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
         </Button>
       </div>
 
-      {/* Code editors */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
-        {/* Source code panel */}
-        <div className="flex flex-col gap-2 min-h-[300px] lg:min-h-0">
+      {/* Code editors side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Source */}
+        <div className="flex flex-col gap-2 min-h-[300px]">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Source Code</h3>
             <span className="text-xs text-muted-foreground">
@@ -161,8 +160,8 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
           />
         </div>
 
-        {/* Translated code panel */}
-        <div className="flex flex-col gap-2 min-h-[300px] lg:min-h-0">
+        {/* Translated */}
+        <div className="flex flex-col gap-2 min-h-[300px]">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Translated Code</h3>
             <div className="flex items-center gap-2">
@@ -170,22 +169,11 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
                 {translatedCode.split("\n").filter(l => l.trim()).length} lines
               </span>
               {translatedCode && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="h-7 gap-1.5"
-                >
+                <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 gap-1.5">
                   {copied ? (
-                    <>
-                      <Check className="h-3.5 w-3.5" />
-                      Copied
-                    </>
+                    <><Check className="h-3.5 w-3.5" /> Copied</>
                   ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5" />
-                      Copy
-                    </>
+                    <><Copy className="h-3.5 w-3.5" /> Copy</>
                   )}
                 </Button>
               )}
@@ -198,14 +186,22 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "cpp" }: Transla
             placeholder="Translated code will appear here..."
             className={cn("flex-1", isTranslating && "opacity-70")}
           />
-          
-          {/* IR Viewer - shown when using local mode */}
           {mode === "local" && <IRViewer ir={ir} />}
-          
-          {/* Python executor */}
           {showPythonExecutor && <PythonExecutor code={translatedCode} />}
         </div>
       </div>
+
+      {/* Analysis sections — shown after translation */}
+      {hasTranslation && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <AttentionHeatmap sourceCode={sourceCode} translatedCode={translatedCode} />
+          <EmbeddingSimilarity sourceCode={sourceCode} translatedCode={translatedCode} />
+        </div>
+      )}
+
+      {hasTranslation && (
+        <SemanticVerification sourceCode={sourceCode} translatedCode={translatedCode} />
+      )}
     </div>
   );
 };
