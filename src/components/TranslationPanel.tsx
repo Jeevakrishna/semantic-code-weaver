@@ -158,6 +158,9 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
             placeholder="Paste your code here..."
             className="flex-1"
           />
+          {sourceLanguage === "python" && sourceCode.trim() && (
+            <PythonExecutor code={sourceCode} />
+          )}
         </div>
 
         {/* Translated */}
@@ -187,7 +190,9 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
             className={cn("flex-1", isTranslating && "opacity-70")}
           />
           {mode === "local" && <IRViewer ir={ir} />}
-          {showPythonExecutor && <PythonExecutor code={translatedCode} />}
+          {targetLanguage === "python" && translatedCode.trim() && (
+            <PythonExecutor code={translatedCode} />
+          )}
         </div>
       </div>
 
