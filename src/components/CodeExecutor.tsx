@@ -29,12 +29,29 @@ interface CodeExecutorProps {
   buttonLabel?: string;
 }
 
-const PISTON_API = "https://emkc.org/api/v2/piston/execute";
+const PISTON_BASE = "https://emkc.org/api/v2/piston";
+const PISTON_EXECUTE = `${PISTON_BASE}/execute`;
+const PISTON_RUNTIMES = `${PISTON_BASE}/runtimes`;
 
-const LANGUAGE_CONFIG: Record<ExecutionLanguage, { language: string; version: string; displayName: string }> = {
-  cpp: { language: "cpp", version: "10.2.0", displayName: "C++" },
-  python: { language: "python", version: "3.10.0", displayName: "Python" },
+const LANGUAGE_CONFIG: Record<ExecutionLanguage, { language: string; displayName: string }> = {
+  cpp: { language: "cpp", displayName: "C++" },
+  python: { language: "python", displayName: "Python" },
 };
+
+/** Fetches the latest available version for a language from the Piston runtimes endpoint */
+async function fetchLatestVersion(language: string): Promise<string> {
+  try {
+    const res = await fetch(PISTON_RUNTIMES);
+    if (!res.ok) throw new Error("runtimes fetch failed");
+    const runtimes: Array<{ language: string; version: string; aliases: string[] }> = await res.json();
+    const match = runtimes
+      .filter((r) => r.language === language || r.aliases.includes(language))
+      .sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true }))[0];
+    return match?.version ?? "*";
+  } catch {
+    return "*";
+  }
+}
 
 const CodeExecutor = ({
   code,
