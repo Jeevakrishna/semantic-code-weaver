@@ -81,7 +81,6 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
     setSourceCode(translatedCode);
   };
 
-  const showPythonExecutor = targetLanguage === "python" && translatedCode.trim();
   const hasTranslation = translatedCode.trim().length > 0;
 
   return (
