@@ -158,7 +158,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
           <div className={cn(
             "flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border",
             outputsMatch
-              ? "border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950/30 dark:text-green-400"
+              ? "border-primary/30 bg-primary/5 text-primary"
               : "border-destructive/30 bg-destructive/5 text-destructive"
           )}>
             {outputsMatch

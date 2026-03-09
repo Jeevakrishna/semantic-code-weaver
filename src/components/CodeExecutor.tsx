@@ -132,7 +132,7 @@ const CodeExecutor = ({
         </Button>
 
         {result && !result.hasError && (
-          <span className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium">
+          <span className="flex items-center gap-1 text-xs text-primary font-medium">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Executed successfully
           </span>
@@ -169,7 +169,7 @@ const CodeExecutor = ({
                 "ml-auto text-xs font-mono px-1.5 py-0.5 rounded",
                 result.hasError
                   ? "bg-destructive/10 text-destructive"
-                  : "bg-green-500/10 text-green-700 dark:text-green-400"
+                  : "bg-primary/10 text-primary"
               )}>
                 exit {result.exitCode}
               </span>
