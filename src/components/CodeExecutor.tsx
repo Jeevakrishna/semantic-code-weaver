@@ -74,12 +74,15 @@ const CodeExecutor = ({
     setResult(null);
 
     try {
-      const response = await fetch(PISTON_API, {
+      // Fetch the latest available runtime version dynamically to avoid 401/version mismatch
+      const version = await fetchLatestVersion(config.language);
+
+      const response = await fetch(PISTON_EXECUTE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           language: config.language,
-          version: config.version,
+          version,
           files: [{ name: language === "cpp" ? "main.cpp" : "main.py", content: code }],
           stdin: "",
           args: [],
@@ -89,7 +92,7 @@ const CodeExecutor = ({
       });
 
       if (!response.ok) {
-        throw new Error(`Piston API error: ${response.status}`);
+        throw new Error(`Piston API error: ${response.status} — ${await response.text()}`);
       }
 
       const data = await response.json();
