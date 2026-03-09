@@ -43,8 +43,8 @@ export async function checkWebGPUSupport(): Promise<boolean> {
     return false;
   }
   try {
-    // @ts-expect-error - WebGPU types not fully available
-    const adapter = await navigator.gpu.requestAdapter();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adapter = await (navigator as any).gpu?.requestAdapter();
     return adapter !== null;
   } catch {
     return false;
