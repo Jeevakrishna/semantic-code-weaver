@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Copy, Check, Loader2, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowRight, Copy, Check, Loader2, RefreshCw, CheckCircle2, XCircle, Play, Terminal } from "lucide-react";
 import { toast } from "sonner";
 import CodeEditor from "./CodeEditor";
 import LanguageSelector, { Language } from "./LanguageSelector";
@@ -9,7 +9,7 @@ import IRViewer from "./IRViewer";
 import AttentionHeatmap from "./AttentionHeatmap";
 import EmbeddingSimilarity from "./EmbeddingSimilarity";
 import SemanticVerification from "./SemanticVerification";
-import CodeExecutor, { ExecutionResult } from "./CodeExecutor";
+import CodeExecutor, { ExecutionResult, ExecutionLanguage } from "./CodeExecutor";
 import { useLocalTranslation } from "@/hooks/useLocalTranslation";
 import { cn } from "@/lib/utils";
 
@@ -18,22 +18,38 @@ interface TranslationPanelProps {
   initialLanguage?: Language;
 }
 
+const RUNNABLE: Language[] = ["python", "cpp", "java"];
+
+function isRunnable(lang: Language): lang is ExecutionLanguage {
+  return RUNNABLE.includes(lang);
+}
+
+function runLabel(lang: Language) {
+  if (lang === "cpp")  return "Compile & Run C++";
+  if (lang === "java") return "Compile & Run Java";
+  return "Run Python";
+}
+
 const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: TranslationPanelProps) => {
-  const [sourceCode, setSourceCode] = useState(initialCode);
+  const [sourceCode, setSourceCode]         = useState(initialCode);
   const [sourceLanguage, setSourceLanguage] = useState<Language>(initialLanguage);
-  const [targetLanguage, setTargetLanguage] = useState<Language>(initialLanguage === "java" ? "python" : "java");
+  const [targetLanguage, setTargetLanguage] = useState<Language>(
+    initialLanguage === "java" ? "python" : initialLanguage === "python" ? "cpp" : "python"
+  );
   const [copied, setCopied] = useState(false);
 
-  // Track C++ execution result — used to gate translation
-  const [cppResult, setCppResult] = useState<ExecutionResult | null>(null);
-  // Track Python (translated) execution result — used to compare outputs
-  const [pyResult, setPyResult] = useState<ExecutionResult | null>(null);
+  // Execution results for source and translated panels
+  const [sourceResult, setSourceResult] = useState<ExecutionResult | null>(null);
+  const [targetResult, setTargetResult] = useState<ExecutionResult | null>(null);
 
-  // Reset execution results whenever source code changes
+  // Reset results when source code changes
   useEffect(() => {
-    setCppResult(null);
-    setPyResult(null);
+    setSourceResult(null);
+    setTargetResult(null);
   }, [sourceCode]);
+
+  // Reset target result when translation changes
+  useEffect(() => { setTargetResult(null); }, []);
 
   const {
     translate,
@@ -57,26 +73,21 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
     if (initialCode) {
       setSourceCode(initialCode);
       setSourceLanguage(initialLanguage);
-      setTargetLanguage(initialLanguage === "java" ? "python" : "java");
+      setTargetLanguage(
+        initialLanguage === "java" ? "python" : initialLanguage === "python" ? "cpp" : "python"
+      );
     }
   }, [initialCode, initialLanguage]);
 
-  // Reset Python result when translated code changes
-  useEffect(() => { setPyResult(null); }, [translatedCode]);
+  useEffect(() => { setTargetResult(null); }, [translatedCode]);
 
   const handleTranslate = async () => {
     if (!sourceCode.trim()) { toast.error("Please enter some code to translate"); return; }
 
-    // If source is C++, require a successful run before translating
+    // Gate: if source is C++, require a successful compile first
     if (sourceLanguage === "cpp") {
-      if (!cppResult) {
-        toast.error("Run the C++ code first to check for errors before translating.");
-        return;
-      }
-      if (cppResult.hasError) {
-        toast.error("Fix C++ errors before translating.");
-        return;
-      }
+      if (!sourceResult)         { toast.error("Compile & Run C++ first before translating."); return; }
+      if (sourceResult.hasError) { toast.error("Fix C++ errors before translating."); return; }
     }
 
     try {
@@ -96,23 +107,23 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
   };
 
   const handleSwapLanguages = () => {
-    const tempLang = sourceLanguage;
+    const tmp = sourceLanguage;
     setSourceLanguage(targetLanguage);
-    setTargetLanguage(tempLang);
+    setTargetLanguage(tmp);
     setSourceCode(translatedCode);
+    setSourceResult(null);
+    setTargetResult(null);
   };
 
-  const hasTranslation = translatedCode.trim().length > 0;
+  const hasTranslation  = translatedCode.trim().length > 0;
+  const cppErrorGate    = sourceLanguage === "cpp" && sourceResult?.hasError;
+  const cppNotYetRun    = sourceLanguage === "cpp" && !sourceResult && sourceCode.trim().length > 0;
 
-  // Determine output match between C++ run and Python run
+  // Output comparison (both panels ran successfully)
   const outputsMatch =
-    cppResult && pyResult && !cppResult.hasError && !pyResult.hasError
-      ? cppResult.stdout.trim() === pyResult.stdout.trim()
+    sourceResult && targetResult && !sourceResult.hasError && !targetResult.hasError
+      ? sourceResult.stdout.trim() === targetResult.stdout.trim()
       : null;
-
-  // Whether translate button should be disabled due to C++ error gate
-  const cppErrorGate = sourceLanguage === "cpp" && cppResult?.hasError;
-  const cppNotYetRun = sourceLanguage === "cpp" && !cppResult && sourceCode.trim().length > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -128,7 +139,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
         modelInfo={modelInfo}
       />
 
-      {/* Language selectors and controls */}
+      {/* Language selectors + translate button */}
       <div className="flex flex-wrap items-end gap-4">
         <LanguageSelector
           value={sourceLanguage}
@@ -137,8 +148,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
           excludeLanguage={targetLanguage}
         />
         <Button
-          variant="outline"
-          size="icon"
+          variant="outline" size="icon"
           onClick={handleSwapLanguages}
           className="mb-0.5"
           title="Swap languages"
@@ -163,7 +173,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
           )}>
             {outputsMatch
               ? <><CheckCircle2 className="h-4 w-4" /> Outputs Match</>
-              : <><XCircle className="h-4 w-4" /> Outputs Differ</>}
+              : <><XCircle       className="h-4 w-4" /> Outputs Differ</>}
           </div>
         )}
 
@@ -172,22 +182,20 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
           disabled={isTranslating || isLoadingModel || !sourceCode.trim() || !!cppErrorGate || cppNotYetRun}
           className="gap-2"
           title={
-            cppErrorGate ? "Fix C++ errors before translating" :
-            cppNotYetRun ? "Run C++ first to verify it compiles" : undefined
+            cppErrorGate  ? "Fix C++ errors before translating" :
+            cppNotYetRun  ? "Run C++ first to verify it compiles" : undefined
           }
         >
-          {isTranslating ? (
-            <><Loader2 className="h-4 w-4 animate-spin" />Translating…</>
-          ) : (
-            <><ArrowRight className="h-4 w-4" />Translate</>
-          )}
+          {isTranslating
+            ? <><Loader2 className="h-4 w-4 animate-spin" />Translating…</>
+            : <><ArrowRight className="h-4 w-4" />Translate</>}
         </Button>
       </div>
 
-      {/* Hint when C++ hasn't been run yet */}
+      {/* Gate hints */}
       {cppNotYetRun && (
         <p className="text-xs text-muted-foreground -mt-2">
-          ⚠️ Run the C++ code first — translation is blocked until it compiles successfully.
+          ⚠️ Compile &amp; Run the C++ source first — translation is blocked until it compiles successfully.
         </p>
       )}
       {cppErrorGate && (
@@ -196,75 +204,91 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
         </p>
       )}
 
-      {/* Code editors side by side */}
+      {/* ── Side-by-side panels ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Source */}
-        <div className="flex flex-col gap-2 min-h-[300px]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-muted-foreground">Source Code</h3>
+
+        {/* ── Source panel ── */}
+        <div className="flex flex-col gap-0 rounded-lg border border-border overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground">Source Code</h3>
             <span className="text-xs text-muted-foreground">
               {sourceCode.split("\n").length} lines
             </span>
           </div>
+
+          {/* Editor */}
           <CodeEditor
             value={sourceCode}
             onChange={setSourceCode}
             language={sourceLanguage}
             placeholder="Paste your code here…"
-            className="flex-1"
+            className="min-h-[260px]"
           />
 
-          {/* Run source code — C++ uses Piston API, Python uses Piston too */}
-          {sourceCode.trim() && (sourceLanguage === "cpp" || sourceLanguage === "python") && (
-            <CodeExecutor
-              code={sourceCode}
-              language={sourceLanguage === "cpp" ? "cpp" : "python"}
-              buttonLabel={sourceLanguage === "cpp" ? "Compile & Run C++" : "Run Python"}
-              onResult={setCppResult}
-            />
+          {/* Run bar */}
+          {sourceCode.trim() && isRunnable(sourceLanguage) && (
+            <div className="border-t border-border">
+              <CodeExecutor
+                code={sourceCode}
+                language={sourceLanguage}
+                buttonLabel={runLabel(sourceLanguage)}
+                onResult={setSourceResult}
+                className="p-3"
+              />
+            </div>
           )}
         </div>
 
-        {/* Translated */}
-        <div className="flex flex-col gap-2 min-h-[300px]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-muted-foreground">Translated Code</h3>
+        {/* ── Translated panel ── */}
+        <div className="flex flex-col gap-0 rounded-lg border border-border overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground">Translated Code</h3>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">
                 {translatedCode.split("\n").filter(l => l.trim()).length} lines
               </span>
               {translatedCode && (
                 <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 gap-1.5">
-                  {copied ? (
-                    <><Check className="h-3.5 w-3.5" /> Copied</>
-                  ) : (
-                    <><Copy className="h-3.5 w-3.5" /> Copy</>
-                  )}
+                  {copied
+                    ? <><Check className="h-3.5 w-3.5" /> Copied</>
+                    : <><Copy  className="h-3.5 w-3.5" /> Copy</>}
                 </Button>
               )}
             </div>
           </div>
+
+          {/* Editor */}
           <CodeEditor
             value={translatedCode}
             language={targetLanguage}
             readOnly
             placeholder="Translated code will appear here…"
-            className={cn("flex-1", isTranslating && "opacity-70")}
+            className={cn("min-h-[260px]", isTranslating && "opacity-60")}
           />
+
           {mode === "local" && <IRViewer ir={ir} />}
 
-          {/* Run translated code — supports Python, C++, Java */}
-          {translatedCode.trim() && (targetLanguage === "python" || targetLanguage === "cpp" || targetLanguage === "java") && (
-            <CodeExecutor
-              code={translatedCode}
-              language={targetLanguage as "python" | "cpp" | "java"}
-              buttonLabel={
-                targetLanguage === "cpp"  ? "Compile & Run C++" :
-                targetLanguage === "java" ? "Compile & Run Java" :
-                "Run Python"
-              }
-              onResult={setPyResult}
-            />
+          {/* ── Run translated code + inline output ── */}
+          {translatedCode.trim() && isRunnable(targetLanguage) && (
+            <div className="border-t border-border">
+              <CodeExecutor
+                code={translatedCode}
+                language={targetLanguage}
+                buttonLabel={runLabel(targetLanguage)}
+                onResult={setTargetResult}
+                className="p-3"
+              />
+            </div>
+          )}
+
+          {/* Placeholder when no translation yet */}
+          {!translatedCode.trim() && (
+            <div className="flex flex-col items-center justify-center gap-2 py-6 text-muted-foreground border-t border-border bg-muted/20">
+              <Terminal className="h-6 w-6 opacity-40" />
+              <p className="text-xs">Translate code to enable the runner</p>
+            </div>
           )}
         </div>
       </div>
