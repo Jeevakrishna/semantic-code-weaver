@@ -253,12 +253,16 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
           />
           {mode === "local" && <IRViewer ir={ir} />}
 
-          {/* Run translated Python */}
-          {translatedCode.trim() && targetLanguage === "python" && (
+          {/* Run translated code — supports Python, C++, Java */}
+          {translatedCode.trim() && (targetLanguage === "python" || targetLanguage === "cpp" || targetLanguage === "java") && (
             <CodeExecutor
               code={translatedCode}
-              language="python"
-              buttonLabel="Run Translated Python"
+              language={targetLanguage as "python" | "cpp" | "java"}
+              buttonLabel={
+                targetLanguage === "cpp"  ? "Compile & Run C++" :
+                targetLanguage === "java" ? "Compile & Run Java" :
+                "Run Python"
+              }
               onResult={setPyResult}
             />
           )}
