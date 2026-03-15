@@ -140,7 +140,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
       />
 
       {/* Language selectors + translate button */}
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-end gap-3">
         <LanguageSelector
           value={sourceLanguage}
           onChange={setSourceLanguage}
@@ -150,7 +150,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
         <Button
           variant="outline" size="icon"
           onClick={handleSwapLanguages}
-          className="mb-0.5"
+          className="mb-0.5 border-2 border-border"
           title="Swap languages"
         >
           <RefreshCw className="h-4 w-4" />
@@ -166,14 +166,14 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
         {/* Output match badge */}
         {outputsMatch !== null && (
           <div className={cn(
-            "flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border",
+            "flex items-center gap-1.5 text-xs font-bold font-mono uppercase tracking-widest px-3 py-2 border-2",
             outputsMatch
-              ? "border-primary/30 bg-primary/5 text-primary"
-              : "border-destructive/30 bg-destructive/5 text-destructive"
+              ? "border-border bg-accent text-accent-foreground"
+              : "border-border bg-destructive text-destructive-foreground"
           )}>
             {outputsMatch
-              ? <><CheckCircle2 className="h-4 w-4" /> Outputs Match</>
-              : <><XCircle       className="h-4 w-4" /> Outputs Differ</>}
+              ? <><CheckCircle2 className="h-4 w-4" /> OUTPUTS MATCH</>
+              : <><XCircle       className="h-4 w-4" /> OUTPUTS DIFFER</>}
           </div>
         )}
 
@@ -187,20 +187,20 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
           }
         >
           {isTranslating
-            ? <><Loader2 className="h-4 w-4 animate-spin" />Translating…</>
-            : <><ArrowRight className="h-4 w-4" />Translate</>}
+            ? <><Loader2 className="h-4 w-4 animate-spin" />TRANSLATING…</>
+            : <><ArrowRight className="h-4 w-4" />TRANSLATE</>}
         </Button>
       </div>
 
       {/* Gate hints */}
       {cppNotYetRun && (
-        <p className="text-xs text-muted-foreground -mt-2">
-          ⚠️ Compile &amp; Run the C++ source first — translation is blocked until it compiles successfully.
+        <p className="text-xs font-mono text-muted-foreground border-l-4 border-border pl-3 -mt-1">
+          ⚠ COMPILE &amp; RUN C++ SOURCE FIRST — TRANSLATION BLOCKED UNTIL SUCCESSFUL.
         </p>
       )}
       {cppErrorGate && (
-        <p className="text-xs text-destructive -mt-2">
-          ✗ C++ has errors. Fix them and re-run before translating.
+        <p className="text-xs font-mono text-destructive border-l-4 border-destructive pl-3 -mt-1">
+          ✗ C++ HAS ERRORS. FIX &amp; RE-RUN BEFORE TRANSLATING.
         </p>
       )}
 
