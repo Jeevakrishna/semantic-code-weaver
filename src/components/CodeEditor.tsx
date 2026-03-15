@@ -52,13 +52,20 @@ const CodeEditor = ({
   };
 
   return (
-    <div className={cn("relative flex h-full rounded-md border border-border bg-muted/30 overflow-hidden", className)}>
+    <div className={cn("relative flex h-full border-0 bg-card overflow-hidden", className)}>
+      {/* Language badge — top left strip */}
+      <div className="absolute top-0 right-0 z-10">
+        <span className="text-xs font-bold font-mono px-3 py-1 bg-primary text-primary-foreground border-b-2 border-l-2 border-border uppercase tracking-widest">
+          {language}
+        </span>
+      </div>
+
       {/* Line numbers */}
       <div
         ref={lineNumbersRef}
-        className="flex-shrink-0 w-12 bg-muted/50 border-r border-border overflow-hidden select-none"
+        className="flex-shrink-0 w-12 bg-muted border-r-2 border-border overflow-hidden select-none"
       >
-        <div className="py-3 px-2 text-right">
+        <div className="py-3 px-2 text-right pt-8">
           {lines.map((num) => (
             <div
               key={num}
@@ -80,20 +87,13 @@ const CodeEditor = ({
         placeholder={placeholder}
         spellCheck={false}
         className={cn(
-          "flex-1 resize-none bg-transparent py-3 px-4 text-sm font-mono leading-6",
+          "flex-1 resize-none bg-transparent py-3 px-4 text-sm font-mono leading-6 pt-8",
           "focus:outline-none focus:ring-0",
           "placeholder:text-muted-foreground/50",
           readOnly && "cursor-default"
         )}
         style={{ tabSize: 2 }}
       />
-
-      {/* Language badge */}
-      <div className="absolute top-2 right-2">
-        <span className="text-xs font-medium px-2 py-1 rounded bg-primary/10 text-primary">
-          {language.toUpperCase()}
-        </span>
-      </div>
     </div>
   );
 };

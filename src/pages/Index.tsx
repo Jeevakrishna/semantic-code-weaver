@@ -5,7 +5,6 @@ import ExampleSnippets from "@/components/ExampleSnippets";
 import SemanticDriftAnalysis from "@/components/SemanticDriftAnalysis";
 import ArchitectureDiagram from "@/components/ArchitectureDiagram";
 import { Language } from "@/components/LanguageSelector";
-import { Separator } from "@/components/ui/separator";
 
 const Index = () => {
   const [exampleKey, setExampleKey] = useState(0);
@@ -22,59 +21,68 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      <main className="flex-1 container px-4 py-8 space-y-8 max-w-6xl mx-auto">
-        {/* Page title */}
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Hybrid Compiler–AI Code Translation
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            A Small Language Model translates structured Intermediate
-            Representations derived from source code ASTs, ensuring semantic
-            fidelity with offline operability.
-          </p>
-        </div>
+      <main className="flex-1 container px-4 py-8 space-y-0 max-w-6xl mx-auto">
 
-        {/* Section 6: System Architecture */}
-        <ArchitectureDiagram />
-
-        <Separator />
-
-        {/* Section 1: Code Translation Interface */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">1. Code Translation</h3>
-              <p className="text-xs text-muted-foreground">
-                Enter source code and translate to the target language
+        {/* Hero strip */}
+        <div className="border-2 border-border bg-accent text-accent-foreground p-6 mb-8"
+          style={{ boxShadow: "6px 6px 0px 0px hsl(var(--border))" }}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1">
+              <div className="inline-block border-2 border-accent-foreground bg-accent-foreground text-accent text-xs font-bold font-mono uppercase tracking-widest px-2 py-0.5 mb-2">
+                v1.0 — BETA
+              </div>
+              <h2 className="text-3xl font-black uppercase tracking-tight leading-none mb-1">
+                Hybrid Compiler–AI<br />Code Translation
+              </h2>
+              <p className="text-sm font-mono opacity-80 max-w-xl">
+                SLM translates structured IR from ASTs. Semantic fidelity guaranteed. Offline-capable.
               </p>
             </div>
             <ExampleSnippets onSelect={handleExampleSelect} />
           </div>
+        </div>
 
-          <TranslationPanel
-            key={exampleKey}
-            initialCode={initialCode}
-            initialLanguage={initialLanguage}
-          />
-        </section>
+        {/* Section: Architecture */}
+        <div className="mb-8">
+          <div className="border-2 border-border border-b-0 bg-primary text-primary-foreground px-4 py-2 inline-block font-bold font-mono uppercase text-xs tracking-widest">
+            § SYSTEM ARCHITECTURE
+          </div>
+          <div className="border-2 border-border" style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}>
+            <ArchitectureDiagram />
+          </div>
+        </div>
 
-        <Separator />
+        {/* Section: Translation */}
+        <div className="mb-8">
+          <div className="border-2 border-border border-b-0 bg-primary text-primary-foreground px-4 py-2 inline-block font-bold font-mono uppercase text-xs tracking-widest">
+            § 01 — CODE TRANSLATION
+          </div>
+          <div className="border-2 border-border p-4" style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}>
+            <TranslationPanel
+              key={exampleKey}
+              initialCode={initialCode}
+              initialLanguage={initialLanguage}
+            />
+          </div>
+        </div>
 
-        {/* Section 4: Error Analysis */}
-        <section>
-          <h3 className="text-lg font-semibold mb-1">4. Error Analysis</h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            Known semantic drift failure cases in code translation
-          </p>
-          <SemanticDriftAnalysis />
-        </section>
+        {/* Section: Error Analysis */}
+        <div className="mb-8">
+          <div className="border-2 border-border border-b-0 bg-primary text-primary-foreground px-4 py-2 inline-block font-bold font-mono uppercase text-xs tracking-widest">
+            § 04 — ERROR ANALYSIS
+          </div>
+          <div className="border-2 border-border p-4" style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}>
+            <p className="text-xs font-mono text-muted-foreground mb-4 uppercase tracking-widest">
+              Known semantic drift failure cases in code translation
+            </p>
+            <SemanticDriftAnalysis />
+          </div>
+        </div>
 
         {/* Footer */}
-        <div className="pt-4 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground">
-            Hybrid Compiler–AI Code Translation System • University Project
-            Demo
+        <div className="border-t-2 border-border pt-4 pb-8">
+          <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest text-center">
+            Hybrid Compiler–AI Code Translation System — University Project Demo
           </p>
         </div>
       </main>
