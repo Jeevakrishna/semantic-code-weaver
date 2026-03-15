@@ -208,12 +208,13 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* ── Source panel ── */}
-        <div className="flex flex-col gap-0 rounded-lg border border-border overflow-hidden">
+        <div className="flex flex-col gap-0 border-2 border-border overflow-hidden"
+          style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}>
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground">Source Code</h3>
-            <span className="text-xs text-muted-foreground">
-              {sourceCode.split("\n").length} lines
+          <div className="flex items-center justify-between px-3 py-2 bg-primary text-primary-foreground border-b-2 border-border">
+            <h3 className="text-xs font-bold font-mono uppercase tracking-widest">SOURCE CODE</h3>
+            <span className="text-xs font-mono opacity-70">
+              {sourceCode.split("\n").length} LINES
             </span>
           </div>
 
@@ -228,7 +229,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
 
           {/* Run bar */}
           {sourceCode.trim() && isRunnable(sourceLanguage) && (
-            <div className="border-t border-border">
+            <div className="border-t-2 border-border">
               <CodeExecutor
                 code={sourceCode}
                 language={sourceLanguage}
@@ -241,19 +242,21 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
         </div>
 
         {/* ── Translated panel ── */}
-        <div className="flex flex-col gap-0 rounded-lg border border-border overflow-hidden">
+        <div className="flex flex-col gap-0 border-2 border-border overflow-hidden"
+          style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}>
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground">Translated Code</h3>
+          <div className="flex items-center justify-between px-3 py-2 bg-primary text-primary-foreground border-b-2 border-border">
+            <h3 className="text-xs font-bold font-mono uppercase tracking-widest">TRANSLATED CODE</h3>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {translatedCode.split("\n").filter(l => l.trim()).length} lines
+              <span className="text-xs font-mono opacity-70">
+                {translatedCode.split("\n").filter(l => l.trim()).length} LINES
               </span>
               {translatedCode && (
-                <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 gap-1.5">
+                <Button variant="ghost" size="sm" onClick={handleCopy}
+                  className="h-7 gap-1.5 text-primary-foreground hover:bg-primary-foreground/10 border-0 text-xs font-mono uppercase">
                   {copied
-                    ? <><Check className="h-3.5 w-3.5" /> Copied</>
-                    : <><Copy  className="h-3.5 w-3.5" /> Copy</>}
+                    ? <><Check className="h-3.5 w-3.5" /> COPIED</>
+                    : <><Copy  className="h-3.5 w-3.5" /> COPY</>}
                 </Button>
               )}
             </div>
@@ -272,7 +275,7 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
 
           {/* ── Run translated code + inline output ── */}
           {translatedCode.trim() && isRunnable(targetLanguage) && (
-            <div className="border-t border-border">
+            <div className="border-t-2 border-border">
               <CodeExecutor
                 code={translatedCode}
                 language={targetLanguage}
@@ -285,9 +288,9 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
 
           {/* Placeholder when no translation yet */}
           {!translatedCode.trim() && (
-            <div className="flex flex-col items-center justify-center gap-2 py-6 text-muted-foreground border-t border-border bg-muted/20">
+            <div className="flex flex-col items-center justify-center gap-2 py-6 text-muted-foreground border-t-2 border-border bg-muted/30">
               <Terminal className="h-6 w-6 opacity-40" />
-              <p className="text-xs">Translate code to enable the runner</p>
+              <p className="text-xs font-mono uppercase tracking-widest">TRANSLATE CODE TO ENABLE RUNNER</p>
             </div>
           )}
         </div>
