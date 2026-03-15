@@ -298,13 +298,23 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
 
       {/* Analysis sections */}
       {hasTranslation && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <AttentionHeatmap sourceCode={sourceCode} translatedCode={translatedCode} />
-          <EmbeddingSimilarity sourceCode={sourceCode} translatedCode={translatedCode} />
-        </div>
-      )}
-      {hasTranslation && (
-        <SemanticVerification sourceCode={sourceCode} translatedCode={translatedCode} />
+        <>
+          <div className="border-t-2 border-border pt-4">
+            <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
+              § 02 — SEMANTIC ANALYSIS
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <AttentionHeatmap sourceCode={sourceCode} translatedCode={translatedCode} />
+            <EmbeddingSimilarity sourceCode={sourceCode} translatedCode={translatedCode} />
+          </div>
+          <div className="border-t-2 border-border pt-4">
+            <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
+              § 03 — SEMANTIC VERIFICATION
+            </div>
+          </div>
+          <SemanticVerification sourceCode={sourceCode} translatedCode={translatedCode} />
+        </>
       )}
     </div>
   );
