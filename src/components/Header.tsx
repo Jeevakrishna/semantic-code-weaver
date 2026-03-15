@@ -3,22 +3,29 @@ import { Button } from "@/components/ui/button";
 
 const Header = () => {
   return (
-    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="border-b-2 border-border bg-primary text-primary-foreground">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary text-primary-foreground">
+          <div className="flex items-center justify-center h-10 w-10 border-2 border-primary-foreground bg-accent text-accent-foreground">
             <Code2 className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">AI Code Translator</h1>
-            <p className="text-xs text-muted-foreground">
-              Translate code between languages with AI
+            <h1 className="text-lg font-bold uppercase tracking-tight leading-none">
+              AI Code Translator
+            </h1>
+            <p className="text-xs opacity-70 font-mono uppercase tracking-widest">
+              Hybrid Compiler–AI System
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="border-2 border-primary-foreground bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary font-bold uppercase tracking-wider rounded-none"
+          >
             <a
               href="https://github.com"
               target="_blank"
