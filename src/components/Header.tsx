@@ -27,7 +27,7 @@ const Header = () => {
             className="border-2 border-primary-foreground bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary font-bold uppercase tracking-wider rounded-none"
           >
             <a
-              href="https://github.com"
+              href="https://github.com/Jeevakrishna/semantic-code-weaver"
               target="_blank"
               rel="noopener noreferrer"
               className="gap-2"
