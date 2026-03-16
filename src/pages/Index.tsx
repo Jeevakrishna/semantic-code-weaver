@@ -35,7 +35,7 @@ const Index = () => {
                 Hybrid Compiler–AI<br />Code Translation
               </h2>
               <p className="text-sm font-mono opacity-80 max-w-xl">
-                SLM translates structured IR from ASTs. Semantic fidelity guaranteed. Offline-capable.
+                SLM translates Intermediate Representation (IR) from an Abstract Syntax Tree (AST). Semantic fidelity guaranteed. Offline-capable.
               </p>
             </div>
             <ExampleSnippets onSelect={handleExampleSelect} />
@@ -82,7 +82,8 @@ const Index = () => {
         {/* Footer */}
         <div className="border-t-2 border-border pt-4 pb-8">
           <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest text-center">
-            Hybrid Compiler–AI Code Translation System — University Project Demo
+            SEMANTIC PRESERVING CODE TRANSLATION USING SMALL LANGUAGE MODEL
+
           </p>
         </div>
       </main>

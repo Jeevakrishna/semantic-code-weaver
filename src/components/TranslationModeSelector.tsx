@@ -102,42 +102,7 @@ export default function TranslationModeSelector({
             </Tooltip>
           </TooltipProvider>
 
-          {/* Local Mode Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={mode === "local" ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={handleLocalClick}
-                  disabled={isLoadingModel || webGPUSupported === false}
-                  className={cn(
-                    "gap-1.5 h-7 px-3",
-                    mode === "local" && "bg-background shadow-sm"
-                  )}
-                >
-                  {isLoadingModel ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Cpu className="h-3.5 w-3.5" />
-                  )}
-                  Local SLM
-                  {isModelReady && (
-                    <CheckCircle className="h-3 w-3 text-green-500" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {webGPUSupported === false ? (
-                  <p>WebGPU not supported in this browser</p>
-                ) : isModelReady ? (
-                  <p>Using {modelInfo.name} locally (offline capable)</p>
-                ) : (
-                  <p>Click to download {modelInfo.name} for offline use</p>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          
         </div>
 
         {/* Status Badges */}

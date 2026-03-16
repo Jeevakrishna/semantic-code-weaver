@@ -10,39 +10,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const STAGES = [
   {
-    label: "Input Code",
+    label: "INPUT CODE ",
     description: "Source language",
-    icon: "📝",
+    icon: "",
   },
   {
-    label: "Tokenization",
+    label: "TOKENIZATION",
     description: "AST → IR",
-    icon: "🔤",
+    icon: "",
   },
   {
-    label: "Small Language Model",
+    label: "SMALL LANGUAGE MODEL",
     description: "WebLLM / Cloud AI",
-    icon: "🧠",
+    icon: "",
   },
   {
-    label: "Translation Output",
+    label: "TRANSLATION OUTPUT",
     description: "Target language",
-    icon: "📄",
+    icon: "",
   },
   {
-    label: "Semantic Verifier",
+    label: "SEMANTIC VERIFIER",
     description: "Output validation",
-    icon: "✅",
+    icon: "",
   },
   {
-    label: "Visualization Layer",
+    label: "VISUALIZATION LAYER",
     description: "Heatmaps & metrics",
-    icon: "📊",
+    icon: "",
   },
 ];
 
 export default function ArchitectureDiagram({ className }: { className?: string }) {
-  const boxWidth = 140;
+  const boxWidth = 240;
   const boxHeight = 56;
   const gap = 24;
   const arrowLen = gap;
@@ -107,7 +107,7 @@ export default function ArchitectureDiagram({ className }: { className?: string 
                     x={x + boxWidth / 2}
                     y={y + 22}
                     textAnchor="middle"
-                    fontSize={11}
+                    fontSize={15}
                     fontWeight={600}
                     fill="hsl(0, 0%, 20%)"
                   >
@@ -118,7 +118,7 @@ export default function ArchitectureDiagram({ className }: { className?: string 
                     x={x + boxWidth / 2}
                     y={y + 40}
                     textAnchor="middle"
-                    fontSize={9}
+                    fontSize={15}
                     fill="hsl(0, 0%, 55%)"
                   >
                     {stage.description}

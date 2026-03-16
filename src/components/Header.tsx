@@ -11,7 +11,7 @@ const Header = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold uppercase tracking-tight leading-none">
-              AI Code Translator
+              SEMANTIC PRESERVING CODE TRANSLATION
             </h1>
             <p className="text-xs opacity-70 font-mono uppercase tracking-widest">
               Hybrid Compiler–AI System
