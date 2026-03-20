@@ -2,7 +2,7 @@
 
 A hybrid compiler-AI system that translates code between programming languages while maintaining semantic fidelity. This project combines Abstract Syntax Tree (AST) parsing with Small Language Model (SLM) translation for accurate, offline-capable code conversion.
 
-##  Architecture
+##  Architectures
 
 The system consists of two main components:
 - **Frontend**: React-based web interface with visualization
