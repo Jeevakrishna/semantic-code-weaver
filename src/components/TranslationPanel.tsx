@@ -47,7 +47,8 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCode
   useEffect(() => {
     setSourceResult(null);
     setTargetResult(null);
-  }, [sourceCode]);
+    onCodeChange?.(sourceCode, sourceLanguage);
+  }, [sourceCode, sourceLanguage, onCodeChange]);
 
   // Reset target result when translation changes
   useEffect(() => { setTargetResult(null); }, []);
