@@ -31,7 +31,7 @@ function runLabel(lang: Language) {
   return "Run Python";
 }
 
-const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: TranslationPanelProps) => {
+const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCodeChange }: TranslationPanelProps) => {
   const [sourceCode, setSourceCode]         = useState(initialCode);
   const [sourceLanguage, setSourceLanguage] = useState<Language>(initialLanguage);
   const [targetLanguage, setTargetLanguage] = useState<Language>(
