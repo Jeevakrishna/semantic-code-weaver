@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 interface TranslationPanelProps {
   initialCode?: string;
   initialLanguage?: Language;
+  onCodeChange?: (code: string, language: Language) => void;
 }
 
 const RUNNABLE: Language[] = ["python", "cpp", "java"];
