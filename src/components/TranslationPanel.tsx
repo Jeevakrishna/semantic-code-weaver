@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 interface TranslationPanelProps {
   initialCode?: string;
   initialLanguage?: Language;
+  onCodeChange?: (code: string, language: Language) => void;
 }
 
 const RUNNABLE: Language[] = ["python", "cpp", "java"];
@@ -30,7 +31,7 @@ function runLabel(lang: Language) {
   return "Run Python";
 }
 
-const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: TranslationPanelProps) => {
+const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCodeChange }: TranslationPanelProps) => {
   const [sourceCode, setSourceCode]         = useState(initialCode);
   const [sourceLanguage, setSourceLanguage] = useState<Language>(initialLanguage);
   const [targetLanguage, setTargetLanguage] = useState<Language>(
@@ -46,7 +47,8 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python" }: Tran
   useEffect(() => {
     setSourceResult(null);
     setTargetResult(null);
-  }, [sourceCode]);
+    onCodeChange?.(sourceCode, sourceLanguage);
+  }, [sourceCode, sourceLanguage, onCodeChange]);
 
   // Reset target result when translation changes
   useEffect(() => { setTargetResult(null); }, []);
