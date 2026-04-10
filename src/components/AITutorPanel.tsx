@@ -21,9 +21,10 @@ const LEVELS: { value: TutorLevel; label: string }[] = [
 ];
 
 const QUICK_PROMPTS = [
-  "Explain this code line by line",
-  "Find bugs and suggest fixes",
-  "How can I optimize this?",
+  "Explain this code step by step",
+  "Find errors and fix them",
+  "Suggest improvements & optimizations",
+  "Predict possible bugs",
   "Give me a practice exercise",
 ];
 
