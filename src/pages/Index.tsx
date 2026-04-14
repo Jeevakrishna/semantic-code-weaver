@@ -89,6 +89,16 @@ const Index = () => {
             </div>
           </div>
 
+          {/* Section: Architecture */}
+          <div className="mb-8">
+            <div className="border-2 border-border border-b-0 bg-primary text-primary-foreground px-4 py-2 inline-block font-bold font-mono uppercase text-xs tracking-widest">
+              § 02 — SYSTEM ARCHITECTURE
+            </div>
+            <div className="border-2 border-border overflow-hidden" style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}>
+              <ArchitectureDiagram />
+            </div>
+          </div>
+
           {/* Section: Error Analysis */}
           <div className="mb-8">
             <div className="border-2 border-border border-b-0 bg-primary text-primary-foreground px-4 py-2 inline-block font-bold font-mono uppercase text-xs tracking-widest">
