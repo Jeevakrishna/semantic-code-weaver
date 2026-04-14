@@ -1,68 +1,162 @@
 /**
- * Futuristic System Architecture Diagram
+ * Advanced Compiler-AI Pipeline Node Graph
  * 
- * A high-tech, cinematic AI dashboard-style flow diagram showing the translation pipeline.
- * Dark background with neon blue/cyan/violet accents, glowing connections, and holographic elements.
+ * A detailed node-map visualization showing the full AI code translation pipeline
+ * with branching token trees, clustered processing stages, and neural-network-style connections.
+ * Canvas-based with animated data flow pulses.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 
-const STAGES = [
-  { label: "INPUT CODE", subtitle: "Source language", icon: "⟨/⟩" },
-  { label: "TOKENIZATION", subtitle: "AST → IR", icon: "⧉" },
-  { label: "SLM ENGINE", subtitle: "WebLLM / Cloud AI", icon: "◈" },
-  { label: "TRANSLATION", subtitle: "Target language", icon: "⟿" },
-  { label: "SEMANTIC VERIFIER", subtitle: "Output validation", icon: "✓" },
-  { label: "VISUALIZATION", subtitle: "Heatmaps & metrics", icon: "◰" },
+// ── Node / Edge definitions ──────────────────────────────────────────
+
+interface GNode {
+  id: string;
+  label: string;
+  subtitle?: string;
+  x: number;
+  y: number;
+  r: number; // radius
+  color: string; // main accent color (css)
+  glow: string;  // glow color
+  cluster?: string;
+  mini?: "heatmap" | "bars" | "graph";
+}
+
+interface GEdge {
+  from: string;
+  to: string;
+  color?: string;
+}
+
+const CYAN = "rgba(56,189,248,";
+const PURPLE = "rgba(139,92,246,";
+const TEAL = "rgba(45,212,191,";
+const PINK = "rgba(244,114,182,";
+const AMBER = "rgba(251,191,36,";
+
+// Positions are in a 1200×700 virtual canvas — we'll scale to fit.
+const NODES: GNode[] = [
+  // ── Root ──
+  { id: "input", label: "INPUT CODE", subtitle: "Source Language", x: 80, y: 350, r: 32, color: CYAN, glow: CYAN, cluster: "root" },
+
+  // ── Tokenization cluster ──
+  { id: "lexer", label: "Lexer", x: 220, y: 240, r: 22, color: CYAN, glow: CYAN, cluster: "token" },
+  { id: "splitter", label: "Token Splitter", x: 220, y: 350, r: 20, color: CYAN, glow: CYAN, cluster: "token" },
+  { id: "syntok", label: "Syntax Tokens", x: 220, y: 460, r: 20, color: CYAN, glow: CYAN, cluster: "token" },
+  { id: "ident", label: "Identifiers", x: 340, y: 170, r: 16, color: TEAL, glow: TEAL, cluster: "token" },
+  { id: "keywords", label: "Keywords", x: 340, y: 240, r: 16, color: TEAL, glow: TEAL, cluster: "token" },
+  { id: "operators", label: "Operators", x: 340, y: 310, r: 16, color: TEAL, glow: TEAL, cluster: "token" },
+  { id: "literals", label: "Literals", x: 340, y: 380, r: 16, color: TEAL, glow: TEAL, cluster: "token" },
+
+  // ── Parser cluster ──
+  { id: "parser", label: "Parser", x: 480, y: 260, r: 22, color: PURPLE, glow: PURPLE, cluster: "parser" },
+  { id: "astgen", label: "AST Generator", x: 480, y: 360, r: 20, color: PURPLE, glow: PURPLE, cluster: "parser" },
+  { id: "syntree", label: "Syntax Tree", x: 480, y: 450, r: 18, color: PURPLE, glow: PURPLE, cluster: "parser" },
+
+  // ── IR cluster ──
+  { id: "ir", label: "IR", subtitle: "Intermediate Rep.", x: 620, y: 300, r: 24, color: CYAN, glow: CYAN, cluster: "ir" },
+  { id: "semmap", label: "Semantic Map", x: 620, y: 400, r: 17, color: CYAN, glow: CYAN, cluster: "ir" },
+  { id: "depgraph", label: "Dep. Graph", x: 620, y: 480, r: 16, color: CYAN, glow: CYAN, cluster: "ir" },
+
+  // ── AI Model cluster ──
+  { id: "slm", label: "SLM ENGINE", subtitle: "WebLLM", x: 770, y: 300, r: 30, color: PURPLE, glow: PURPLE, cluster: "model" },
+  { id: "ctxenc", label: "Context Encoder", x: 770, y: 200, r: 17, color: PINK, glow: PINK, cluster: "model" },
+  { id: "transeng", label: "Translation Eng.", x: 770, y: 400, r: 17, color: PINK, glow: PINK, cluster: "model" },
+  { id: "targpred", label: "Syntax Predictor", x: 770, y: 480, r: 16, color: PINK, glow: PINK, cluster: "model" },
+
+  // ── Output ──
+  { id: "output", label: "TRANSLATION", subtitle: "Target Language", x: 930, y: 300, r: 28, color: TEAL, glow: TEAL, cluster: "output" },
+
+  // ── Semantic Verifier cluster ──
+  { id: "typechk", label: "Type Checker", x: 1020, y: 170, r: 16, color: AMBER, glow: AMBER, cluster: "verify", mini: "heatmap" },
+  { id: "logicval", label: "Logic Validator", x: 1020, y: 240, r: 16, color: AMBER, glow: AMBER, cluster: "verify" },
+  { id: "outval", label: "Validation Eng.", x: 1020, y: 310, r: 17, color: AMBER, glow: AMBER, cluster: "verify", mini: "bars" },
+
+  // ── Visualization cluster ──
+  { id: "heatmaps", label: "Heatmaps", x: 1020, y: 420, r: 16, color: CYAN, glow: CYAN, cluster: "viz", mini: "heatmap" },
+  { id: "tokmet", label: "Token Metrics", x: 1020, y: 490, r: 15, color: CYAN, glow: CYAN, cluster: "viz", mini: "bars" },
+  { id: "errdensity", label: "Error Density", x: 1120, y: 450, r: 15, color: PINK, glow: PINK, cluster: "viz", mini: "graph" },
+  { id: "perfmap", label: "Perf. Analytics", x: 1120, y: 520, r: 15, color: TEAL, glow: TEAL, cluster: "viz", mini: "bars" },
 ];
 
-function useAnimationFrame(cb: (t: number) => void) {
-  const ref = useRef<number>(0);
-  useEffect(() => {
-    let active = true;
-    const loop = (t: number) => {
-      if (!active) return;
-      cb(t);
-      ref.current = requestAnimationFrame(loop);
-    };
-    ref.current = requestAnimationFrame(loop);
-    return () => { active = false; cancelAnimationFrame(ref.current); };
-  }, [cb]);
+const EDGES: GEdge[] = [
+  // Root → tokenization
+  { from: "input", to: "lexer" },
+  { from: "input", to: "splitter" },
+  { from: "input", to: "syntok" },
+  // Token tree
+  { from: "lexer", to: "ident" },
+  { from: "lexer", to: "keywords" },
+  { from: "lexer", to: "operators" },
+  { from: "splitter", to: "literals" },
+  { from: "splitter", to: "operators" },
+  { from: "syntok", to: "literals" },
+  // Token → parser
+  { from: "ident", to: "parser" },
+  { from: "keywords", to: "parser" },
+  { from: "operators", to: "astgen" },
+  { from: "literals", to: "astgen" },
+  { from: "parser", to: "astgen" },
+  { from: "astgen", to: "syntree" },
+  // Parser → IR
+  { from: "parser", to: "ir" },
+  { from: "astgen", to: "ir" },
+  { from: "syntree", to: "semmap" },
+  { from: "ir", to: "semmap" },
+  { from: "semmap", to: "depgraph" },
+  // IR → Model
+  { from: "ir", to: "slm" },
+  { from: "semmap", to: "ctxenc" },
+  { from: "slm", to: "ctxenc" },
+  { from: "slm", to: "transeng" },
+  { from: "transeng", to: "targpred" },
+  // Model → Output
+  { from: "slm", to: "output" },
+  { from: "transeng", to: "output" },
+  // Output → Verifier
+  { from: "output", to: "typechk" },
+  { from: "output", to: "logicval" },
+  { from: "output", to: "outval" },
+  // Output → Viz
+  { from: "output", to: "heatmaps" },
+  { from: "output", to: "tokmet" },
+  { from: "heatmaps", to: "errdensity" },
+  { from: "tokmet", to: "perfmap" },
+  { from: "outval", to: "errdensity" },
+];
+
+// ── Helpers ──────────────────────────────────────────────────────────
+
+function nodeMap(): Map<string, GNode> {
+  const m = new Map<string, GNode>();
+  NODES.forEach((n) => m.set(n.id, n));
+  return m;
 }
+
+// ── Component ────────────────────────────────────────────────────────
 
 export default function ArchitectureDiagram({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const nMap = useRef(nodeMap());
 
-  // Particle system for background
-  const particlesRef = useRef<Array<{ x: number; y: number; vx: number; vy: number; size: number; alpha: number }>>([]);
-  const pulseRef = useRef<Array<{ progress: number; pathIndex: number; speed: number }>>([]);
+  // Pulse objects that travel along edges
+  const pulsesRef = useRef<Array<{ edgeIdx: number; progress: number; speed: number }>>([]);
 
   useEffect(() => {
-    // Init particles
-    const particles = [];
-    for (let i = 0; i < 60; i++) {
-      particles.push({
-        x: Math.random(),
-        y: Math.random(),
-        vx: (Math.random() - 0.5) * 0.0003,
-        vy: (Math.random() - 0.5) * 0.0003,
-        size: Math.random() * 2 + 0.5,
-        alpha: Math.random() * 0.3 + 0.05,
-      });
-    }
-    particlesRef.current = particles;
-
-    // Init pulse dots on connections
-    const pulses = [];
-    for (let i = 0; i < STAGES.length - 1; i++) {
-      pulses.push({ progress: Math.random(), pathIndex: i, speed: 0.003 + Math.random() * 0.004 });
-      pulses.push({ progress: Math.random(), pathIndex: i, speed: 0.002 + Math.random() * 0.003 });
-    }
-    pulseRef.current = pulses;
+    const pulses: typeof pulsesRef.current = [];
+    EDGES.forEach((_, i) => {
+      const count = 1 + Math.floor(Math.random() * 2);
+      for (let c = 0; c < count; c++) {
+        pulses.push({ edgeIdx: i, progress: Math.random(), speed: 0.002 + Math.random() * 0.004 });
+      }
+    });
+    pulsesRef.current = pulses;
   }, []);
 
-  const draw = (t: number) => {
+  const draw = useCallback((t: number) => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
@@ -83,236 +177,258 @@ export default function ArchitectureDiagram({ className }: { className?: string 
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Background
-    ctx.fillStyle = "#0a0e1a";
+    // Virtual canvas is 1200×620 — compute scale
+    const VW = 1200;
+    const VH = 620;
+    const scale = Math.min(W / VW, H / VH);
+    const offX = (W - VW * scale) / 2;
+    const offY = (H - VH * scale) / 2;
+
+    const tx = (x: number) => offX + x * scale;
+    const ty = (y: number) => offY + y * scale;
+    const ts = (s: number) => s * scale;
+
+    // ── Background ──
+    ctx.fillStyle = "#060a14";
     ctx.fillRect(0, 0, W, H);
 
     // Subtle grid
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.04)";
+    ctx.strokeStyle = "rgba(56,189,248,0.03)";
     ctx.lineWidth = 0.5;
-    const gridSize = 30;
-    for (let x = 0; x < W; x += gridSize) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    const gridStep = 25 * scale;
+    for (let gx = offX % gridStep; gx < W; gx += gridStep) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
     }
-    for (let y = 0; y < H; y += gridSize) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    for (let gy = offY % gridStep; gy < H; gy += gridStep) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
     }
 
-    // Background particles (floating network nodes)
-    const particles = particlesRef.current;
-    for (const p of particles) {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.x < 0 || p.x > 1) p.vx *= -1;
-      if (p.y < 0 || p.y > 1) p.vy *= -1;
-
-      const px = p.x * W;
-      const py = p.y * H;
-
+    // ── Background particles ──
+    for (let i = 0; i < 40; i++) {
+      const px = ((Math.sin(t * 0.0002 + i * 7.3) + 1) / 2) * W;
+      const py = ((Math.cos(t * 0.00015 + i * 4.1) + 1) / 2) * H;
       ctx.beginPath();
-      ctx.arc(px, py, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+      ctx.arc(px, py, 1, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(56,189,248,${0.06 + Math.sin(t * 0.001 + i) * 0.03})`;
       ctx.fill();
     }
 
-    // Draw connections between nearby particles
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = (particles[i].x - particles[j].x) * W;
-        const dy = (particles[i].y - particles[j].y) * H;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 100) {
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x * W, particles[i].y * H);
-          ctx.lineTo(particles[j].x * W, particles[j].y * H);
-          ctx.strokeStyle = `rgba(56, 189, 248, ${0.06 * (1 - dist / 100)})`;
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
-        }
-      }
-    }
+    // ── Cluster backgrounds ──
+    const clusters: Record<string, { nodes: GNode[]; color: string }> = {};
+    NODES.forEach((n) => {
+      if (!n.cluster) return;
+      if (!clusters[n.cluster]) clusters[n.cluster] = { nodes: [], color: n.glow };
+      clusters[n.cluster].nodes.push(n);
+    });
 
-    // Pipeline layout
-    const padX = 40;
-    const padY = 50;
-    const nodeW = Math.min(140, (W - padX * 2 - (STAGES.length - 1) * 20) / STAGES.length);
-    const nodeH = 70;
-    const gapX = (W - padX * 2 - STAGES.length * nodeW) / (STAGES.length - 1);
-    const centerY = H / 2;
-
-    const nodePositions: Array<{ x: number; y: number; cx: number; cy: number }> = [];
-
-    for (let i = 0; i < STAGES.length; i++) {
-      const x = padX + i * (nodeW + gapX);
-      const y = centerY - nodeH / 2;
-      nodePositions.push({ x, y, cx: x + nodeW / 2, cy: centerY });
-    }
-
-    // Draw glowing connections
-    for (let i = 0; i < nodePositions.length - 1; i++) {
-      const from = nodePositions[i];
-      const to = nodePositions[i + 1];
-      const x1 = from.x + nodeW;
-      const x2 = to.x;
-      const y = centerY;
-
-      // Glow
-      const grad = ctx.createLinearGradient(x1, y, x2, y);
-      grad.addColorStop(0, "rgba(56, 189, 248, 0.6)");
-      grad.addColorStop(0.5, "rgba(139, 92, 246, 0.5)");
-      grad.addColorStop(1, "rgba(56, 189, 248, 0.6)");
-
+    Object.values(clusters).forEach(({ nodes: cns, color }) => {
+      if (cns.length < 2) return;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      cns.forEach((n) => {
+        minX = Math.min(minX, n.x - n.r - 20);
+        minY = Math.min(minY, n.y - n.r - 20);
+        maxX = Math.max(maxX, n.x + n.r + 20);
+        maxY = Math.max(maxY, n.y + n.r + 20);
+      });
+      ctx.fillStyle = color + "0.03)";
+      ctx.strokeStyle = color + "0.08)";
+      ctx.lineWidth = 1;
+      const rx = tx(minX), ry = ty(minY), rw = ts(maxX - minX), rh = ts(maxY - minY);
       ctx.beginPath();
-      ctx.moveTo(x1 + 2, y);
-      ctx.lineTo(x2 - 2, y);
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 2;
+      roundRect(ctx, rx, ry, rw, rh, 8);
+      ctx.fill();
       ctx.stroke();
+    });
+
+    // ── Draw edges ──
+    const map = nMap.current;
+    EDGES.forEach((e) => {
+      const from = map.get(e.from);
+      const to = map.get(e.to);
+      if (!from || !to) return;
+
+      const x1 = tx(from.x), y1 = ty(from.y);
+      const x2 = tx(to.x), y2 = ty(to.y);
 
       // Outer glow
       ctx.beginPath();
-      ctx.moveTo(x1 + 2, y);
-      ctx.lineTo(x2 - 2, y);
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.15)";
-      ctx.lineWidth = 8;
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = (from.glow || CYAN) + "0.06)";
+      ctx.lineWidth = ts(5);
       ctx.stroke();
 
-      // Arrow head
-      const arrowSize = 6;
+      // Main line
       ctx.beginPath();
-      ctx.moveTo(x2 - 2, y);
-      ctx.lineTo(x2 - arrowSize - 2, y - arrowSize / 2);
-      ctx.lineTo(x2 - arrowSize - 2, y + arrowSize / 2);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = (from.glow || CYAN) + "0.18)";
+      ctx.lineWidth = ts(1.2);
+      ctx.stroke();
+
+      // Arrow tip
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const toR = ts(to.r);
+      const tipX = x2 - Math.cos(angle) * toR;
+      const tipY = y2 - Math.sin(angle) * toR;
+      const aSize = ts(5);
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(tipX - Math.cos(angle - 0.4) * aSize, tipY - Math.sin(angle - 0.4) * aSize);
+      ctx.lineTo(tipX - Math.cos(angle + 0.4) * aSize, tipY - Math.sin(angle + 0.4) * aSize);
       ctx.closePath();
-      ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
+      ctx.fillStyle = (from.glow || CYAN) + "0.5)";
       ctx.fill();
-    }
+    });
 
-    // Animated pulse dots on connections
-    for (const pulse of pulseRef.current) {
-      pulse.progress += pulse.speed;
-      if (pulse.progress > 1) pulse.progress = 0;
+    // ── Animated pulses ──
+    pulsesRef.current.forEach((p) => {
+      p.progress += p.speed;
+      if (p.progress > 1) p.progress = 0;
 
-      const from = nodePositions[pulse.pathIndex];
-      const to = nodePositions[pulse.pathIndex + 1];
-      const x1 = from.x + nodeW + 2;
-      const x2 = to.x - 2;
-      const px = x1 + (x2 - x1) * pulse.progress;
-      const py = centerY;
+      const e = EDGES[p.edgeIdx];
+      const from = map.get(e.from);
+      const to = map.get(e.to);
+      if (!from || !to) return;
 
-      const glowRadius = 4 + Math.sin(t * 0.005 + pulse.pathIndex) * 2;
+      const px = tx(from.x + (to.x - from.x) * p.progress);
+      const py = ty(from.y + (to.y - from.y) * p.progress);
 
-      // Glow around dot
-      const rGrad = ctx.createRadialGradient(px, py, 0, px, py, glowRadius * 3);
-      rGrad.addColorStop(0, "rgba(56, 189, 248, 0.5)");
-      rGrad.addColorStop(1, "rgba(56, 189, 248, 0)");
+      const rGrad = ctx.createRadialGradient(px, py, 0, px, py, ts(8));
+      rGrad.addColorStop(0, (from.glow || CYAN) + "0.6)");
+      rGrad.addColorStop(1, (from.glow || CYAN) + "0)");
       ctx.beginPath();
-      ctx.arc(px, py, glowRadius * 3, 0, Math.PI * 2);
+      ctx.arc(px, py, ts(8), 0, Math.PI * 2);
       ctx.fillStyle = rGrad;
       ctx.fill();
 
-      // Dot
       ctx.beginPath();
-      ctx.arc(px, py, 2, 0, Math.PI * 2);
-      ctx.fillStyle = "#38bdf8";
+      ctx.arc(px, py, ts(1.8), 0, Math.PI * 2);
+      ctx.fillStyle = (from.glow || CYAN) + "0.9)";
       ctx.fill();
-    }
+    });
 
-    // Draw nodes
-    for (let i = 0; i < STAGES.length; i++) {
-      const stage = STAGES[i];
-      const { x, y } = nodePositions[i];
+    // ── Draw nodes ──
+    NODES.forEach((n) => {
+      const cx = tx(n.x), cy = ty(n.y), r = ts(n.r);
+      const pulse = 1 + Math.sin(t * 0.002 + n.x * 0.01) * 0.12;
 
-      // Node glow
-      const nGrad = ctx.createRadialGradient(x + nodeW / 2, y + nodeH / 2, 0, x + nodeW / 2, y + nodeH / 2, nodeW * 0.8);
-      nGrad.addColorStop(0, "rgba(139, 92, 246, 0.08)");
-      nGrad.addColorStop(1, "rgba(139, 92, 246, 0)");
+      // Outer glow
+      const oGrad = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 2.5 * pulse);
+      oGrad.addColorStop(0, n.glow + "0.12)");
+      oGrad.addColorStop(1, n.glow + "0)");
       ctx.beginPath();
-      ctx.arc(x + nodeW / 2, y + nodeH / 2, nodeW * 0.8, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r * 2.5 * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = oGrad;
+      ctx.fill();
+
+      // Node circle fill
+      const nGrad = ctx.createRadialGradient(cx, cy - r * 0.3, r * 0.1, cx, cy, r);
+      nGrad.addColorStop(0, "rgba(20,30,55,0.95)");
+      nGrad.addColorStop(1, "rgba(10,15,30,0.9)");
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fillStyle = nGrad;
       ctx.fill();
 
-      // Node background
+      // Border
+      const borderAlpha = 0.4 + Math.sin(t * 0.003 + n.y * 0.02) * 0.15;
       ctx.beginPath();
-      roundRect(ctx, x, y, nodeW, nodeH, 6);
-      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-      ctx.fill();
-
-      // Node border with glow
-      ctx.beginPath();
-      roundRect(ctx, x, y, nodeW, nodeH, 6);
-      const borderPulse = 0.4 + Math.sin(t * 0.002 + i * 0.8) * 0.2;
-      ctx.strokeStyle = `rgba(56, 189, 248, ${borderPulse})`;
-      ctx.lineWidth = 1.2;
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = n.color + `${borderAlpha})`;
+      ctx.lineWidth = ts(1.5);
       ctx.stroke();
 
-      // Corner accents
-      const cornerLen = 8;
-      ctx.strokeStyle = "rgba(139, 92, 246, 0.7)";
-      ctx.lineWidth = 2;
-      // Top-left
-      ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
-      // Top-right
-      ctx.beginPath(); ctx.moveTo(x + nodeW - cornerLen, y); ctx.lineTo(x + nodeW, y); ctx.lineTo(x + nodeW, y + cornerLen); ctx.stroke();
-      // Bottom-left
-      ctx.beginPath(); ctx.moveTo(x, y + nodeH - cornerLen); ctx.lineTo(x, y + nodeH); ctx.lineTo(x + cornerLen, y + nodeH); ctx.stroke();
-      // Bottom-right
-      ctx.beginPath(); ctx.moveTo(x + nodeW - cornerLen, y + nodeH); ctx.lineTo(x + nodeW, y + nodeH); ctx.lineTo(x + nodeW, y + nodeH - cornerLen); ctx.stroke();
-
-      // Icon
-      ctx.font = `${Math.min(16, nodeW * 0.12)}px monospace`;
-      ctx.fillStyle = "rgba(56, 189, 248, 0.9)";
-      ctx.textAlign = "center";
-      ctx.fillText(stage.icon, x + nodeW / 2, y + 22);
+      // Inner ring accent
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 0.75, -Math.PI * 0.3 + t * 0.0005, Math.PI * 0.5 + t * 0.0005);
+      ctx.strokeStyle = n.color + "0.15)";
+      ctx.lineWidth = ts(0.8);
+      ctx.stroke();
 
       // Label
-      ctx.font = `bold ${Math.min(10, nodeW * 0.075)}px 'Space Grotesk', sans-serif`;
-      ctx.fillStyle = "rgba(226, 232, 240, 0.95)";
+      const fontSize = Math.max(7, Math.min(10, r * 0.42));
+      ctx.font = `bold ${ts(fontSize)}px 'Space Grotesk', sans-serif`;
+      ctx.fillStyle = "rgba(226,232,240,0.92)";
       ctx.textAlign = "center";
-      ctx.fillText(stage.label, x + nodeW / 2, y + 40);
+      ctx.textBaseline = "middle";
 
-      // Subtitle
-      ctx.font = `${Math.min(9, nodeW * 0.065)}px 'Space Mono', monospace`;
-      ctx.fillStyle = "rgba(148, 163, 184, 0.7)";
-      ctx.fillText(stage.subtitle, x + nodeW / 2, y + 55);
-    }
+      if (n.subtitle) {
+        ctx.fillText(n.label, cx, cy - ts(4));
+        ctx.font = `${ts(Math.max(6, fontSize * 0.7))}px 'Space Mono', monospace`;
+        ctx.fillStyle = "rgba(148,163,184,0.65)";
+        ctx.fillText(n.subtitle, cx, cy + ts(7));
+      } else {
+        ctx.fillText(n.label, cx, cy);
+      }
 
-    // Side analytics panels (right side decorative elements)
-    const panelX = W - 120;
-    const panelW = 100;
+      // Mini embedded visualizations
+      if (n.mini) {
+        drawMiniViz(ctx, n.mini, cx + r * 0.6, cy - r * 0.8, ts(20), ts(12), t, n.color);
+      }
+    });
 
-    // Mini heatmap
-    drawMiniHeatmap(ctx, panelX, 20, panelW, 40, t);
+    // ── Title ──
+    ctx.font = `${ts(8)}px 'Space Mono', monospace`;
+    ctx.fillStyle = "rgba(148,163,184,0.35)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("AI CODE TRANSLATION PIPELINE — COMPILER INTELLIGENCE GRAPH", W / 2, ty(8));
 
-    // Mini bar chart
-    drawMiniBarChart(ctx, panelX, 70, panelW, 35, t);
+    // ── Status bar ──
+    const barH = ts(14);
+    const barY = H - barH;
+    ctx.fillStyle = "rgba(10,15,30,0.85)";
+    ctx.fillRect(0, barY, W, barH);
+    ctx.strokeStyle = "rgba(56,189,248,0.12)";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(0, barY); ctx.lineTo(W, barY); ctx.stroke();
 
-    // Mini metrics
-    drawMiniMetrics(ctx, panelX, 115, panelW, 30, t);
+    ctx.font = `${ts(7)}px 'Space Mono', monospace`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(56,189,248,0.5)";
+    ctx.fillText("● PIPELINE ACTIVE", ts(8), barY + barH / 2);
 
-    // Left side decorative panel
-    drawMiniNetwork(ctx, 10, 15, 90, 55, t);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(148,163,184,0.35)";
+    ctx.fillText(`${NODES.length} NODES · ${EDGES.length} EDGES · SEMANTIC PRESERVING`, W / 2, barY + barH / 2);
 
-    // Bottom status bar
-    drawStatusBar(ctx, W, H, t);
-  };
+    ctx.textAlign = "right";
+    const lat = (14 + Math.sin(t * 0.001) * 4).toFixed(0);
+    ctx.fillStyle = "rgba(56,189,248,0.45)";
+    ctx.fillText(`LATENCY ${lat}ms`, W - ts(8), barY + barH / 2);
+  }, []);
 
-  useAnimationFrame(draw);
+  useEffect(() => {
+    let active = true;
+    const loop = (t: number) => {
+      if (!active) return;
+      draw(t);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => { active = false; cancelAnimationFrame(rafRef.current); };
+  }, [draw]);
 
   return (
-    <div ref={containerRef} className={className} style={{ position: "relative", width: "100%", height: 220, background: "#0a0e1a", borderRadius: 0, overflow: "hidden" }}>
+    <div
+      ref={containerRef}
+      className={className}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: 380,
+        background: "#060a14",
+        overflow: "hidden",
+      }}
+    >
       <canvas ref={canvasRef} style={{ position: "absolute", top: 0, left: 0 }} />
-      {/* Title overlay */}
-      <div style={{
-        position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)",
-        color: "rgba(148, 163, 184, 0.6)", fontSize: 10, fontFamily: "'Space Mono', monospace",
-        letterSpacing: "0.2em", textTransform: "uppercase", pointerEvents: "none",
-      }}>
-        SYSTEM ARCHITECTURE — AI CODE TRANSLATION PIPELINE
-      </div>
     </div>
   );
 }
+
+// ── Utility ──────────────────────────────────────────────────────────
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.moveTo(x + r, y);
@@ -326,145 +442,45 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.arcTo(x, y, x + r, y, r);
 }
 
-function drawMiniHeatmap(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number) {
-  // Panel bg
-  ctx.fillStyle = "rgba(15, 23, 42, 0.6)";
+function drawMiniViz(
+  ctx: CanvasRenderingContext2D,
+  type: "heatmap" | "bars" | "graph",
+  x: number, y: number, w: number, h: number, t: number, color: string
+) {
+  ctx.fillStyle = "rgba(10,15,30,0.7)";
   ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.2)";
+  ctx.strokeStyle = color + "0.25)";
   ctx.lineWidth = 0.5;
   ctx.strokeRect(x, y, w, h);
 
-  // Label
-  ctx.font = "7px 'Space Mono', monospace";
-  ctx.fillStyle = "rgba(148, 163, 184, 0.5)";
-  ctx.textAlign = "left";
-  ctx.fillText("TOKEN ALIGNMENT", x + 4, y + 9);
-
-  // Heatmap cells
-  const cols = 10;
-  const rows = 3;
-  const cellW = (w - 8) / cols;
-  const cellH = (h - 16) / rows;
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const val = (Math.sin(t * 0.001 + r * 2 + c * 0.7) + 1) / 2;
-      const blue = Math.floor(100 + val * 155);
-      const alpha = 0.3 + val * 0.5;
-      ctx.fillStyle = `rgba(56, ${blue}, 248, ${alpha})`;
-      ctx.fillRect(x + 4 + c * cellW, y + 14 + r * cellH, cellW - 1, cellH - 1);
+  if (type === "heatmap") {
+    const cols = 5, rows = 2;
+    const cw = (w - 2) / cols, ch = (h - 2) / rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const v = (Math.sin(t * 0.002 + r * 3 + c * 1.1) + 1) / 2;
+        ctx.fillStyle = color + `${0.2 + v * 0.6})`;
+        ctx.fillRect(x + 1 + c * cw, y + 1 + r * ch, cw - 0.5, ch - 0.5);
+      }
     }
-  }
-}
-
-function drawMiniBarChart(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number) {
-  ctx.fillStyle = "rgba(15, 23, 42, 0.6)";
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = "rgba(139, 92, 246, 0.2)";
-  ctx.lineWidth = 0.5;
-  ctx.strokeRect(x, y, w, h);
-
-  ctx.font = "7px 'Space Mono', monospace";
-  ctx.fillStyle = "rgba(148, 163, 184, 0.5)";
-  ctx.textAlign = "left";
-  ctx.fillText("SIMILARITY", x + 4, y + 9);
-
-  const bars = 8;
-  const barW = (w - 12) / bars;
-  for (let i = 0; i < bars; i++) {
-    const val = 0.3 + (Math.sin(t * 0.0015 + i * 1.2) + 1) / 2 * 0.6;
-    const barH = (h - 16) * val;
-    const grad = ctx.createLinearGradient(0, y + h - 2 - barH, 0, y + h - 2);
-    grad.addColorStop(0, "rgba(139, 92, 246, 0.8)");
-    grad.addColorStop(1, "rgba(56, 189, 248, 0.4)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(x + 6 + i * barW, y + h - 2 - barH, barW - 2, barH);
-  }
-}
-
-function drawMiniMetrics(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number) {
-  ctx.fillStyle = "rgba(15, 23, 42, 0.6)";
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.15)";
-  ctx.lineWidth = 0.5;
-  ctx.strokeRect(x, y, w, h);
-
-  const metrics = [
-    { label: "BLEU", val: (0.85 + Math.sin(t * 0.001) * 0.05).toFixed(2) },
-    { label: "SIM", val: (0.92 + Math.sin(t * 0.0012 + 1) * 0.03).toFixed(2) },
-  ];
-
-  ctx.font = "7px 'Space Mono', monospace";
-  ctx.textAlign = "left";
-  metrics.forEach((m, i) => {
-    ctx.fillStyle = "rgba(148, 163, 184, 0.5)";
-    ctx.fillText(m.label, x + 4, y + 12 + i * 12);
-    ctx.fillStyle = "rgba(56, 189, 248, 0.9)";
-    ctx.fillText(m.val, x + 40, y + 12 + i * 12);
-  });
-}
-
-function drawMiniNetwork(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number) {
-  ctx.fillStyle = "rgba(15, 23, 42, 0.5)";
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = "rgba(139, 92, 246, 0.15)";
-  ctx.lineWidth = 0.5;
-  ctx.strokeRect(x, y, w, h);
-
-  ctx.font = "7px 'Space Mono', monospace";
-  ctx.fillStyle = "rgba(148, 163, 184, 0.5)";
-  ctx.textAlign = "left";
-  ctx.fillText("NODE GRAPH", x + 4, y + 9);
-
-  // Draw small network nodes
-  const nodes = [
-    { nx: 0.25, ny: 0.4 }, { nx: 0.5, ny: 0.25 }, { nx: 0.75, ny: 0.5 },
-    { nx: 0.4, ny: 0.7 }, { nx: 0.65, ny: 0.75 }, { nx: 0.2, ny: 0.65 },
-  ];
-
-  // Edges
-  const edges = [[0, 1], [1, 2], [0, 3], [3, 4], [2, 4], [0, 5], [5, 3]];
-  ctx.strokeStyle = "rgba(139, 92, 246, 0.25)";
-  ctx.lineWidth = 0.5;
-  for (const [a, b] of edges) {
+  } else if (type === "bars") {
+    const bars = 5;
+    const bw = (w - 2) / bars;
+    for (let i = 0; i < bars; i++) {
+      const v = 0.3 + (Math.sin(t * 0.002 + i * 1.5) + 1) / 2 * 0.6;
+      const bh = (h - 2) * v;
+      ctx.fillStyle = color + "0.6)";
+      ctx.fillRect(x + 1 + i * bw, y + h - 1 - bh, bw - 1, bh);
+    }
+  } else {
     ctx.beginPath();
-    ctx.moveTo(x + nodes[a].nx * w, y + 12 + nodes[a].ny * (h - 16));
-    ctx.lineTo(x + nodes[b].nx * w, y + 12 + nodes[b].ny * (h - 16));
+    for (let i = 0; i <= 5; i++) {
+      const px = x + 1 + (i / 5) * (w - 2);
+      const py = y + h / 2 + Math.sin(t * 0.003 + i * 1.2) * (h * 0.3);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = color + "0.7)";
+    ctx.lineWidth = 1;
     ctx.stroke();
   }
-
-  // Nodes
-  nodes.forEach((n, i) => {
-    const px = x + n.nx * w;
-    const py = y + 12 + n.ny * (h - 16);
-    const pulse = 2 + Math.sin(t * 0.003 + i) * 0.8;
-    ctx.beginPath();
-    ctx.arc(px, py, pulse, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(139, 92, 246, ${0.5 + Math.sin(t * 0.002 + i) * 0.2})`;
-    ctx.fill();
-  });
-}
-
-function drawStatusBar(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
-  const barH = 16;
-  const y = H - barH;
-
-  ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
-  ctx.fillRect(0, y, W, barH);
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.15)";
-  ctx.lineWidth = 0.5;
-  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-
-  ctx.font = "7px 'Space Mono', monospace";
-  ctx.textAlign = "left";
-  ctx.fillStyle = "rgba(56, 189, 248, 0.5)";
-  ctx.fillText("● PIPELINE ACTIVE", 10, y + 11);
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
-  ctx.fillText("SEMANTIC PRESERVING CODE TRANSLATION — SLM ENGINE v1.0", W / 2, y + 11);
-
-  ctx.textAlign = "right";
-  const latency = (12 + Math.sin(t * 0.001) * 3).toFixed(0);
-  ctx.fillStyle = "rgba(56, 189, 248, 0.5)";
-  ctx.fillText(`LATENCY: ${latency}ms`, W - 10, y + 11);
 }
