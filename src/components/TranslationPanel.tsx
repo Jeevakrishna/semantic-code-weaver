@@ -10,6 +10,10 @@ import AttentionHeatmap from "./AttentionHeatmap";
 import EmbeddingSimilarity from "./EmbeddingSimilarity";
 import SemanticVerification from "./SemanticVerification";
 import CodeExecutor, { ExecutionResult, ExecutionLanguage } from "./CodeExecutor";
+import TranslationExplanation from "./TranslationExplanation";
+import ASTFlowchart from "./ASTFlowchart";
+import TranslationQuiz from "./TranslationQuiz";
+import ExportReport from "./ExportReport";
 import { useLocalTranslation } from "@/hooks/useLocalTranslation";
 import { cn } from "@/lib/utils";
 
@@ -298,12 +302,53 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCode
         </div>
       </div>
 
-      {/* Analysis sections */}
+      {/* Educational sections */}
       {hasTranslation && (
         <>
+          {/* Explanation Layer */}
           <div className="border-t-2 border-border pt-4">
             <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
-              § 02 — SEMANTIC ANALYSIS
+              § 02 — EDUCATIONAL EXPLANATION
+            </div>
+          </div>
+          <div className="border-2 border-border p-4" style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}>
+            <TranslationExplanation
+              sourceCode={sourceCode}
+              translatedCode={translatedCode}
+              sourceLanguage={sourceLanguage}
+              targetLanguage={targetLanguage}
+            />
+          </div>
+
+          {/* AST & Flowchart */}
+          <div className="border-t-2 border-border pt-4">
+            <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
+              § 03 — AST & IR VISUALIZATION
+            </div>
+          </div>
+          <div className="border-2 border-border p-4" style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}>
+            <ASTFlowchart sourceCode={sourceCode} sourceLanguage={sourceLanguage} />
+          </div>
+
+          {/* Learning Quiz */}
+          <div className="border-t-2 border-border pt-4">
+            <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
+              § 04 — LEARNING QUIZ
+            </div>
+          </div>
+          <div className="border-2 border-border p-4" style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}>
+            <TranslationQuiz
+              sourceCode={sourceCode}
+              translatedCode={translatedCode}
+              sourceLanguage={sourceLanguage}
+              targetLanguage={targetLanguage}
+            />
+          </div>
+
+          {/* Semantic Analysis */}
+          <div className="border-t-2 border-border pt-4">
+            <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
+              § 05 — SEMANTIC ANALYSIS
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -312,10 +357,25 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCode
           </div>
           <div className="border-t-2 border-border pt-4">
             <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
-              § 03 — SEMANTIC VERIFICATION
+              § 06 — SEMANTIC VERIFICATION
             </div>
           </div>
           <SemanticVerification sourceCode={sourceCode} translatedCode={translatedCode} />
+
+          {/* Export Report */}
+          <div className="border-t-2 border-border pt-4">
+            <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
+              § 07 — EXPORT REPORT
+            </div>
+          </div>
+          <div className="border-2 border-border p-4" style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}>
+            <ExportReport
+              sourceCode={sourceCode}
+              translatedCode={translatedCode}
+              sourceLanguage={sourceLanguage}
+              targetLanguage={targetLanguage}
+            />
+          </div>
         </>
       )}
     </div>
