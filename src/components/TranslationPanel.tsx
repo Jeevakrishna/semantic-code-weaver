@@ -320,15 +320,6 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCode
             />
           </div>
 
-          {/* AST & Flowchart */}
-          <div className="border-t-2 border-border pt-4">
-            <div className="inline-block border-2 border-border border-b-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest mb-0">
-              § 03 — AST & IR VISUALIZATION
-            </div>
-          </div>
-          <div className="border-2 border-border p-4" style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}>
-            <ASTFlowchart sourceCode={sourceCode} sourceLanguage={sourceLanguage} />
-          </div>
 
           {/* Learning Quiz */}
           <div className="border-t-2 border-border pt-4">
