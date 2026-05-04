@@ -90,12 +90,6 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCode
   const handleTranslate = async () => {
     if (!sourceCode.trim()) { toast.error("Please enter some code to translate"); return; }
 
-    // Gate: if source is C++, require a successful compile first
-    if (sourceLanguage === "cpp") {
-      if (!sourceResult)         { toast.error("Compile & Run C++ first before translating."); return; }
-      if (sourceResult.hasError) { toast.error("Fix C++ errors before translating."); return; }
-    }
-
     try {
       await translate(sourceCode, sourceLanguage, targetLanguage);
       toast.success("Translation complete!");
