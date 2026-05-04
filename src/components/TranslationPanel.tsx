@@ -116,8 +116,8 @@ const TranslationPanel = ({ initialCode = "", initialLanguage = "python", onCode
   };
 
   const hasTranslation  = translatedCode.trim().length > 0;
-  const cppErrorGate    = sourceLanguage === "cpp" && sourceResult?.hasError;
-  const cppNotYetRun    = sourceLanguage === "cpp" && !sourceResult && sourceCode.trim().length > 0;
+  const cppErrorGate    = false;
+  const cppNotYetRun    = false;
 
   // Output comparison (both panels ran successfully)
   const outputsMatch =
